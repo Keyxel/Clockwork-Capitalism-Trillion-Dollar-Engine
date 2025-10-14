@@ -1,0 +1,10 @@
+{
+	"format_version": "1.21.6",
+	"credit": "Made with Blockbench",
+	"parent": "block/block",
+	"textures": {
+		"2": "creatingspace:block/flight_recorder/axis",
+		"3": "creatingspace:block/flight_recorder/axis_top",
+		"particle": "creatingspace:block/flight_recorder/axis"
+	}
+}

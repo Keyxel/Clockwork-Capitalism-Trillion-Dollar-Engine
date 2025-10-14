@@ -1,0 +1,25 @@
+{
+	"format_version": "1.21.6",
+	"credit": "Made with Blockbench",
+	"parent": "block/block",
+	"textures": {
+		"down": "kubejs:block/polar_kelp_block_bottom",
+		"up": "kubejs:block/polar_kelp_block_top",
+		"particle": "kubejs:block/polar_kelp_block_side",
+		"west": "kubejs:block/polar_kelp_block_side"
+	},
+	"elements": [
+		{
+			"from": [0, 0, 0],
+			"to": [16, 16, 16],
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#west", "cullface": "north"},
+				"east": {"uv": [16, 0, 0, 16], "texture": "#west", "cullface": "east"},
+				"south": {"uv": [16, 0, 0, 16], "texture": "#west", "cullface": "south"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#west", "cullface": "west"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#up", "cullface": "up"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#down", "cullface": "down"}
+			}
+		}
+	]
+}

@@ -1,0 +1,22 @@
+{
+	"format_version": "1.21.6",
+	"credit": "Designed by Blay09 with BDcraft Cubik PRO 0.96 Beta - http://bdcraft.net (Sub Model: Liquid)",
+	"textures": {
+		"milk": "cookingforblockheads:block/milk"
+	},
+	"elements": [
+		{
+			"name": "Liquid_Milk",
+			"from": [4.5, 0.5, 4.5],
+			"to": [11.5, 6, 11.5],
+			"faces": {
+				"north": {"uv": [4.5, 10, 11.5, 15.5], "texture": "#milk"},
+				"east": {"uv": [4.5, 10, 11.5, 15.5], "texture": "#milk"},
+				"south": {"uv": [4.5, 10, 11.5, 15.5], "texture": "#milk"},
+				"west": {"uv": [4.5, 10, 11.5, 15.5], "texture": "#milk"},
+				"up": {"uv": [4.5, 4.5, 11.5, 11.5], "texture": "#milk"},
+				"down": {"uv": [4.5, 4.5, 11.5, 11.5], "texture": "#milk"}
+			}
+		}
+	]
+}
