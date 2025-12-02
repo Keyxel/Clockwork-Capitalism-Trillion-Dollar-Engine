@@ -95,15 +95,10 @@ CreateEvents.spoutHandler((event) => {
 
     // 水晶增殖系列
     function registerStage(baseName, targetBlock, fluids, nextBlocks, modInfo, isStartStage) {
-        // 生成唯一的事件ID
-        var eventId = "dut_create:" + baseName + "_" + targetBlock;
-        if (isStartStage) {
-            eventId += "_spawn";
-        } else {
-            eventId += "_grow";
-        }
+        // 生成事件ID
+        var eventId = "dut_create:" + baseName + "_" + targetBlock + (isStartStage ? "_spawn" : "_grow");
         
-        // 构建目标方块的完整ID
+        // 构建目标方块完整ID
         var targetBlockFull;
         if (isStartStage && modInfo.startMod) {
             targetBlockFull = modInfo.startMod + ":" + targetBlock;
@@ -116,23 +111,33 @@ CreateEvents.spoutHandler((event) => {
             eventId,
             targetBlockFull,
             function(block, fluid, simulate) {
-                // 1. 判断使用哪种流体
-                var useFluidA = (fluid.id === fluids.fluidA.id && fluid.amount >= fluids.fluidA.amount);
-                var useFluidB = (fluid.id === fluids.fluidB.id && fluid.amount >= fluids.fluidB.amount);
-                var usingFluid = null;
-                var nextBlockId = null;
-                
-                if (useFluidA) {
-                    usingFluid = fluids.fluidA;
-                    nextBlockId = nextBlocks.fluidA;
-                } else if (useFluidB) {
-                    usingFluid = fluids.fluidB;
-                    nextBlockId = nextBlocks.fluidB;
-                } else {
-                    return 0; // 不是目标流体
+                // 检查流体A
+                var useFluidA = false;
+                if (fluids.fluidA && fluids.fluidA.id && fluid.id === fluids.fluidA.id && fluid.amount >= (fluids.fluidA.amount || 0)) {
+                    useFluidA = true;
                 }
                 
-                // 2. 如果是起始生长（从母岩开始），需要检查空气位置
+                // 检查流体B（如果有）
+                var useFluidB = false;
+                if (fluids.fluidB && fluids.fluidB.id && fluid.id === fluids.fluidB.id && fluid.amount >= (fluids.fluidB.amount || 0)) {
+                    useFluidB = true;
+                }
+                
+                // 没有匹配的流体
+                if (!useFluidA && !useFluidB) return 0;
+                
+                // 确定下一个方块
+                var nextBlockId;
+                if (useFluidA) {
+                    nextBlockId = nextBlocks.fluidA;
+                } else if (useFluidB) {
+                    // 流体B的方块，如果没有专门定义就使用流体A的
+                    nextBlockId = nextBlocks.fluidB || nextBlocks.fluidA;
+                } else {
+                    return 0;
+                }
+                
+                // 起始生长阶段
                 if (isStartStage) {
                     var foundAir = false;
                     var airDir = "up";
@@ -151,23 +156,21 @@ CreateEvents.spoutHandler((event) => {
                     
                     if (!simulate) {
                         playEffects(block);
-                        var setPos = block[airDir];
-                        block.level.server.runCommandSilent(
-                            "/setblock " + setPos.x + " " + setPos.y + " " + setPos.z + " " + 
-                            modInfo.modId + ":" + nextBlockId + "[facing=" + airDir + "]"
-                        );
+                        var targetPos = block[airDir];
+                        var command = "/setblock " + targetPos.x + " " + targetPos.y + " " + targetPos.z + " " + 
+                                    modInfo.modId + ":" + nextBlockId + "[facing=" + airDir + "]";
+                        block.level.server.runCommandSilent(command);
                     }
                     return 50;
                 }
                 
-                // 3. 普通生长阶段（从小芽到中芽、中芽到大芽等）
+                // 普通生长阶段
                 if (!simulate) {
                     var face = block.properties.facing ? block.properties.facing.toString() : "up";
                     playEffects(block);
-                    block.level.server.runCommandSilent(
-                        "/setblock " + block.x + " " + block.y + " " + block.z + " " + 
-                        modInfo.modId + ":" + nextBlockId + "[facing=" + face + "]"
-                    );
+                    var command = "/setblock " + block.x + " " + block.y + " " + block.z + " " + 
+                                modInfo.modId + ":" + nextBlockId + "[facing=" + face + "]";
+                    block.level.server.runCommandSilent(command);
                 }
                 return 50;
             }
@@ -184,75 +187,91 @@ CreateEvents.spoutHandler((event) => {
         );
     }
 
-    // 注册完整的水晶生长链
-    function registerFullCrystalChain(config) {
+    // 注册完整水晶生长链
+    function registerCrystalChain(config) {
+        console.log("注册水晶: " + config.name);
+        
         var name = config.name;
         var startBlock = config.startBlock;
+        var stageNames = config.stageNames; // [小芽, 中芽, 大芽, 簇]
         var modInfo = config.modInfo;
-        var fluids = config.fluids;
-        var stageNames = config.stageNames; // [small, medium, large, cluster]
         
-        // === 1. 注册起始生长（从母岩到小芽）===
-        // 流体A：常规催化 -> 小芽
-        // 流体B：魔力催化 -> 直接生成对应的最终产物（如紫水晶簇或石英簇）
+        // 准备起始生长流体配置 - 这是关键修复！！！
+        var startFluids = {
+            fluidA: {
+                id: "kubejs:crystal_catalytic_liquid",
+                amount: config.startAmountA || 100
+            }
+        };
+        
+        // 只有在有startAmountB时才添加流体B
+        if (config.startAmountB !== undefined && config.startAmountB > 0) {
+            startFluids.fluidB = {
+                id: "kubejs:mana_crystal_catalytic_liquid",
+                amount: config.startAmountB
+            };
+        }
+        
+        // 1. 起始生长（从母岩开始）
         registerStage(
             name + "_start",
             startBlock,
+            startFluids, // 使用正确构建的流体对象
             {
-                fluidA: { id: fluids.fluidA.id, amount: fluids.startAmounts.fluidA },
-                fluidB: { id: fluids.fluidB.id, amount: fluids.startAmounts.fluidB }
-            },
-            {
-                fluidA: stageNames[0], // 小芽
-                fluidB: stageNames[3]  // 直接到最终簇（对于魔力催化）
+                fluidA: stageNames[0],  // 常规催化 -> 小芽
+                fluidB: stageNames[3]   // 魔力催化 -> 直接到簇
             },
             modInfo,
-            true // 是起始阶段
+            true
         );
         
-        // === 2. 注册生长阶段1：小芽 -> 中芽 ===
+        // 2. 小芽 -> 中芽
         registerStage(
             name + "_small",
             stageNames[0],
             {
-                fluidA: { id: fluids.fluidA.id, amount: fluids.growAmounts.fluidA },
-                fluidB: { id: fluids.fluidB.id, amount: 0 } // 流体B不参与此阶段
+                fluidA: {
+                    id: "kubejs:crystal_catalytic_liquid",
+                    amount: config.growAmountA || 100
+                }
+                // 注意：这里没有fluidB，因为只有常规催化参与此阶段
             },
             {
-                fluidA: stageNames[1], // 中芽
-                fluidB: stageNames[1]  // 实际上不会触发，但需要占位
+                fluidA: stageNames[1]
             },
             modInfo,
             false
         );
         
-        // === 3. 注册生长阶段2：中芽 -> 大芽 ===
+        // 3. 中芽 -> 大芽
         registerStage(
             name + "_medium",
             stageNames[1],
             {
-                fluidA: { id: fluids.fluidA.id, amount: fluids.growAmounts.fluidA },
-                fluidB: { id: fluids.fluidB.id, amount: 0 }
+                fluidA: {
+                    id: "kubejs:crystal_catalytic_liquid",
+                    amount: config.growAmountA || 100
+                }
             },
             {
-                fluidA: stageNames[2], // 大芽
-                fluidB: stageNames[2]
+                fluidA: stageNames[2]
             },
             modInfo,
             false
         );
         
-        // === 4. 注册生长阶段3：大芽 -> 最终簇 ===
+        // 4. 大芽 -> 簇
         registerStage(
             name + "_large",
             stageNames[2],
             {
-                fluidA: { id: fluids.fluidA.id, amount: fluids.growAmounts.fluidA },
-                fluidB: { id: fluids.fluidB.id, amount: 0 }
+                fluidA: {
+                    id: "kubejs:crystal_catalytic_liquid",
+                    amount: config.growAmountA || 100
+                }
             },
             {
-                fluidA: stageNames[3], // 最终簇
-                fluidB: stageNames[3]
+                fluidA: stageNames[3]
             },
             modInfo,
             false
@@ -260,173 +279,84 @@ CreateEvents.spoutHandler((event) => {
     }
 
     // ============== 水晶配置 ==============
-
     var crystalConfigs = [
-        // 1. 原版紫水晶
         {
             name: "amethyst",
             startBlock: "budding_amethyst",
             stageNames: ["small_amethyst_bud", "medium_amethyst_bud", "large_amethyst_bud", "amethyst_cluster"],
-            modInfo: {
-                modId: "minecraft",
-                startMod: "minecraft"
-            },
-            fluids: {
-                fluidA: { id: "kubejs:crystal_catalytic_liquid" },
-                fluidB: { id: "kubejs:mana_crystal_catalytic_liquid" }
-            },
-            startAmounts: {
-                fluidA: 100,   // 常规催化：母岩->小芽
-                fluidB: 250    // 魔力催化：母岩->直接到簇
-            },
-            growAmounts: {
-                fluidA: 100,   // 常规催化：每阶段生长
-                fluidB: 0      // 魔力催化：不参与中间生长
-            }
+            modInfo: { modId: "minecraft", startMod: "minecraft" },
+            startAmountA: 100,
+            startAmountB: 250,
+            growAmountA: 100
         },
-        
-        // 2. AE2 赛特斯石英 (无暇)
         {
             name: "quartz_flawless",
             startBlock: "flawless_budding_quartz",
             stageNames: ["small_quartz_bud", "medium_quartz_bud", "large_quartz_bud", "quartz_cluster"],
-            modInfo: {
-                modId: "ae2",
-                startMod: "ae2"
-            },
-            fluids: {
-                fluidA: { id: "kubejs:crystal_catalytic_liquid" },
-                fluidB: { id: "kubejs:mana_crystal_catalytic_liquid" }
-            },
-            startAmounts: {
-                fluidA: 150,
-                fluidB: 250
-            },
-            growAmounts: {
-                fluidA: 150,
-                fluidB: 0
-            }
+            modInfo: { modId: "ae2", startMod: "ae2" },
+            startAmountA: 150,
+            startAmountB: 250,
+            growAmountA: 150
         },
-        
-        // 3. AE2 赛特斯石英 (有暇)
         {
             name: "quartz_flawed",
             startBlock: "flawed_budding_quartz",
             stageNames: ["small_quartz_bud", "medium_quartz_bud", "large_quartz_bud", "quartz_cluster"],
-            modInfo: {
-                modId: "ae2",
-                startMod: "ae2"
-            },
-            fluids: {
-                fluidA: { id: "kubejs:crystal_catalytic_liquid" },
-                fluidB: { id: "kubejs:mana_crystal_catalytic_liquid" }
-            },
-            startAmounts: {
-                fluidA: 200,
-                fluidB: 350
-            },
-            growAmounts: {
-                fluidA: 200,
-                fluidB: 0
-            }
+            modInfo: { modId: "ae2", startMod: "ae2" },
+            startAmountA: 200,
+            startAmountB: 350,
+            growAmountA: 200
         },
-        
-        // 4. AE2 赛特斯石英 (开裂)
         {
             name: "quartz_chipped",
             startBlock: "chipped_budding_quartz",
             stageNames: ["small_quartz_bud", "medium_quartz_bud", "large_quartz_bud", "quartz_cluster"],
-            modInfo: {
-                modId: "ae2",
-                startMod: "ae2"
-            },
-            fluids: {
-                fluidA: { id: "kubejs:crystal_catalytic_liquid" },
-                fluidB: { id: "kubejs:mana_crystal_catalytic_liquid" }
-            },
-            startAmounts: {
-                fluidA: 250,
-                fluidB: 400
-            },
-            growAmounts: {
-                fluidA: 250,
-                fluidB: 0
-            }
+            modInfo: { modId: "ae2", startMod: "ae2" },
+            startAmountA: 250,
+            startAmountB: 400,
+            growAmountA: 250
         },
-        
-        // 5. AE2 赛特斯石英 (损坏)
         {
             name: "quartz_damaged",
             startBlock: "damaged_budding_quartz",
             stageNames: ["small_quartz_bud", "medium_quartz_bud", "large_quartz_bud", "quartz_cluster"],
-            modInfo: {
-                modId: "ae2",
-                startMod: "ae2"
-            },
-            fluids: {
-                fluidA: { id: "kubejs:crystal_catalytic_liquid" },
-                fluidB: { id: "kubejs:mana_crystal_catalytic_liquid" }
-            },
-            startAmounts: {
-                fluidA: 300,
-                fluidB: 450
-            },
-            growAmounts: {
-                fluidA: 300,
-                fluidB: 0
-            }
+            modInfo: { modId: "ae2", startMod: "ae2" },
+            startAmountA: 300,
+            startAmountB: 450,
+            growAmountA: 300
         },
-        
-        // 6. AE2 赛特斯石英 (石英方块)
         {
             name: "quartz_block",
             startBlock: "quartz_block",
             stageNames: ["small_quartz_bud", "medium_quartz_bud", "large_quartz_bud", "quartz_cluster"],
-            modInfo: {
-                modId: "ae2",
-                startMod: "ae2"
-            },
-            fluids: {
-                fluidA: { id: "kubejs:crystal_catalytic_liquid" },
-                fluidB: { id: "kubejs:mana_crystal_catalytic_liquid" }
-            },
-            startAmounts: {
-                fluidA: 400,
-                fluidB: 600
-            },
-            growAmounts: {
-                fluidA: 400,
-                fluidB: 0
-            }
+            modInfo: { modId: "ae2", startMod: "ae2" },
+            startAmountA: 400,
+            startAmountB: 600,
+            growAmountA: 400
         },
-        
-        // 7. 玫瑰石英 (Biomes O' Plenty)
         {
             name: "rose_quartz",
             startBlock: "budding_rose_quartz",
             stageNames: ["small_rose_quartz_bud", "medium_rose_quartz_bud", "large_rose_quartz_bud", "rose_quartz_cluster"],
-            modInfo: {
-                modId: "biomesoplenty",
-                startMod: "kubejs" // 注意：母岩来自kubejs
-            },
-            fluids: {
-                fluidA: { id: "kubejs:crystal_catalytic_liquid" },
-                fluidB: { id: "kubejs:mana_crystal_catalytic_liquid" }
-            },
-            startAmounts: {
-                fluidA: 500,
-                fluidB: 500  // 注意：你原来的配置中，玫瑰石英的魔力催化也是从母岩->小芽
-            },
-            growAmounts: {
-                fluidA: 500,
-                fluidB: 0
-            }
+            modInfo: { modId: "biomesoplenty", startMod: "kubejs" },
+            startAmountA: 500,
+            startAmountB: 500,
+            growAmountA: 500
         }
     ];
 
     // ============== 执行注册 ==============
+    console.log("===== 开始注册水晶增殖系统 =====");
+
     for (var i = 0; i < crystalConfigs.length; i++) {
-        registerFullCrystalChain(crystalConfigs[i]);
+        try {
+            registerCrystalChain(crystalConfigs[i]);
+            console.log("✓ 已注册: " + crystalConfigs[i].name);
+        } catch (err) {
+            console.error("✗ 注册失败: " + crystalConfigs[i].name + " - " + err);
+        }
     }
 
+    console.log("===== 水晶增殖系统注册完成 =====");
+    console.log("总计: " + crystalConfigs.length + " 种水晶已注册");
 })
