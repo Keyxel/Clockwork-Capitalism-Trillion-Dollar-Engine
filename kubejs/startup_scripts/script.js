@@ -56,6 +56,7 @@ event.create('small_nether_crystal').texture("kubejs:item/quartz/crystal_seed_ne
 event.create('growing_small_nether_crystal', 'create:sequenced_assembly').texture("kubejs:item/quartz/crystal_seed_nether3")
 
 // 构件
+event.create('broken_precision_mechanism').texture("kubejs:item/mechanism/broken_precision_mechanism")
 let mechanism = (id, rarity) => {
 	let e = id.toLowerCase()
 	event.create(e + '_mechanism').texture("kubejs:item/mechanism/" + e + "_mechanism").rarity(rarity ? rarity : 'common')
@@ -91,11 +92,14 @@ event.create('calorite_dust').texture("kubejs:item/dust/calorite_dust")
 event.create('aurum_sawdust').texture("kubejs:item/dust/mysterywood_sawdust")
 event.create('rune_dust').texture("kubejs:item/dust/rune_dust")
 event.create('naga_dust').texture("kubejs:item/dust/naga_dust").rarity('uncommon')
+event.create('amethyst_dust').texture("kubejs:item/dust/amethyst_dust")
 
 // 处理器
 event.create('incomplete_calculation_processor', 'create:sequenced_assembly').texture("kubejs:item/processor/incomplete_calculation_processor")
 event.create('incomplete_logic_processor', 'create:sequenced_assembly').texture("kubejs:item/processor/incomplete_logic_processor")
 event.create('incomplete_engineering_processor', 'create:sequenced_assembly').texture("kubejs:item/processor/incomplete_engineering_processor")
+event.create('incomplete_accumulation_processor', 'create:sequenced_assembly').texture("kubejs:item/processor/incomplete_accumulation_processor")	
+
 event.create('incomplete_unassembled_pcb', 'create:sequenced_assembly').texture("kubejs:item/processor/incomplete_unassembled_pcb")
 event.create('incomplete_advanced_control_circuit', 'create:sequenced_assembly').texture("kubejs:item/processor/incomplete_advanced_control_circuit")
 event.create('incomplete_elite_control_circuit', 'create:sequenced_assembly').texture("kubejs:item/processor/incomplete_elite_control_circuit")
@@ -159,11 +163,22 @@ event.create('andesite_upgrade_smithing_template').texture("kubejs:item/template
 // event.create('c3_upgrade_smithing_template').texture("kubejs:item/template/invar_upgrade_smithing_template")
 // event.create('c4_upgrade_smithing_template').texture("kubejs:item/template/ae_upgrade_smithing_template")
 
+// 食物
+event.create('miners_treat').parentModel("kubejs:item/food/miners_treat").food(food => {food.hunger(4).saturation(0.5).effect('haste', 300, 0, 1).alwaysEdible().fastToEat()})
+event.create('incomplete_sweet_mechanism', 'create:sequenced_assembly').texture("kubejs:item/mechanism/incomplete_sweet_mechanism").food(food => {food.hunger(6).saturation(0.5)})
+event.create('sweet_mechanism').texture("kubejs:item/mechanism/sweet_mechanism").food(food => {food.hunger(20).saturation(5)
+	.effect('haste', 6000, 0, 1)
+	.effect('speed', 6000, 0, 2)
+	.effect('farmersdelight:comfort', 1200, 0, 1)
+	.effect('farmersdelight:nourishment', 2400, 0, 1)
+	.effect('create_confectionery:stimulation', 600, 0, 1)})
+
 })
 
 StartupEvents.registry('block', event => {
 
 event.create('polar_kelp_block').soundType('grass').hardness(2.0).tagBlock("minecraft:mineable/hoe")
+event.create('budding_rose_quartz').soundType('amethyst').hardness(4.0).tagBlock("minecraft:mineable/pickaxe").tagBlock("create:wrench_pickup").lightLevel(1)
 
 // 炼金镭射
 event.create('ponder_laser_lamp').model('kubejs:block/ponder_laser_lamp').soundType("lantern").notSolid().renderType("translucent")
@@ -201,13 +216,27 @@ machine('Obsidian', "translucent", "lantern")
 machine('Zinc', "cutout", "lantern")
 machine('Enderium', "cutout", "lantern")
 
+event.create('sweet_machine')
+		.model('kubejs:block/sweet_machine')
+		.soundType("stone")
+		.hardness(2.0)
+		.notSolid()
+		.renderType("translucent")
+		.tagBlock("create:wrench_pickup")
+		.tagBlock("minecraft:mineable/pickaxe")
+
 })
 
 StartupEvents.registry('fluid', event => {
 
+event.create("mana_resin").bucketColor(0x00adcf).stillTexture('kubejs:fluid/mana_resin_still').flowingTexture('kubejs:fluid/mana_resin_flow')
 event.create("fine_sand").bucketColor(0xE3DBB0).stillTexture('kubejs:fluid/fine_sand_still').flowingTexture('kubejs:fluid/fine_sand_flow')
+event.create("fine_sulfur").bucketColor(0xE3D167).stillTexture('kubejs:fluid/sulfur_still').flowingTexture('kubejs:fluid/sulfur_flow')
+event.create("fine_gunpowder").bucketColor(0x494949).stillTexture('kubejs:fluid/fine_gunpowder_still').flowingTexture('kubejs:fluid/fine_gunpowder_flow')
 event.create("waste").bucketColor(0x123d36).stillTexture('kubejs:fluid/waste_still').flowingTexture('kubejs:fluid/waste_flow')
 event.create("sky_stone").bucketColor(0x595959).stillTexture('kubejs:fluid/sky_stone_still').flowingTexture('kubejs:fluid/sky_stone_flowing')
+event.create("crystal_catalytic_liquid").bucketColor(0xb38ef3).stillTexture('kubejs:fluid/crystal_catalytic_liquid_still').flowingTexture('kubejs:fluid/crystal_catalytic_liquid_flow')
+event.create("mana_crystal_catalytic_liquid").bucketColor(0x2fb8e4).stillTexture('kubejs:fluid/mana_crystal_catalytic_liquid_still').flowingTexture('kubejs:fluid/mana_crystal_catalytic_liquid_flow')
 
 event.create('raw_logic').stillTexture('kubejs:fluid/number_still').flowingTexture('kubejs:fluid/number_flow').color(0xE7FFCB)
 let colors = [0xCBE827, 0xAEE827, 0x68E827, 0x27E86E, 0x27E8B1, 0x27DEE8, 0x27B5E8, 0x2798E8, 0x2778E8, 0x2748E8]

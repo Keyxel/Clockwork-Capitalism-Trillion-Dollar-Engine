@@ -63,7 +63,42 @@ ServerEvents.tags('item', event => {
 	event.get('farmersdelight:barks')
 		.add(KJ('aurum_bark'))
 
+	// c2 
+	event.get('forge:screwdrivers')
+		.add('projectred_core:screwdriver')
+	
+	// c2a
+	event.get('forge:cutter_knife')
+		.add('kubejs:cutter_knife')
 
+	// c3
+	event.get('forge:chromatic_resonators')
+		.add('kubejs:chromatic_resonator')
+
+	// c4
+	event.get("forge:circuit_press")
+		.add(AE2("name_press"))
+		.add(AE2("silicon_press"))
+		.add(AE2("logic_processor_press"))
+		.add(AE2("engineering_processor_press"))
+		.add(AE2("calculation_processor_press"))
+
+	event.get('thermal:crafting/casts')
+		.add(KJ("three_cast"))
+		.add(KJ("eight_cast"))
+		.add(KJ("plus_cast"))
+		.add(KJ("minus_cast"))
+		.add(KJ("multiply_cast"))
+		.add(KJ("divide_cast"))
+		.add(F("#circuit_press"))
+
+	event.get('thermal:crafting/dies').add('kubejs:press_rod_die')
+	
+	event.get('vintageimprovements:curving_heads')
+		.add('#forge:circuit_press')
+		.add('#thermal:crafting/dies')
+
+	event.get('forge:flash_drives').add(KJ('flash_drive'))
 })
 
 ServerEvents.tags('fluid', event => {

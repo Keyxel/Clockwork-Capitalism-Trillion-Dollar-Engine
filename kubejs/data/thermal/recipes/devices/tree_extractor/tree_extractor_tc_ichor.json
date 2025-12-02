@@ -1,0 +1,24 @@
+{
+  "type": "thermal:tree_extractor",
+  "trunk": {
+    "Name": "tconstruct:bloodshroom_log",
+    "Properties": {
+      "axis": "y"
+    }
+  },
+  "leaves": {
+    "Name": "tconstruct:blood_slime_leaves",
+    "Properties": {
+      "persistent": "false"
+    }
+  },
+  "sapling": "tconstruct:sky_slime_sapling",
+  "min_height": 3,
+  "max_height": 16,
+  "min_leaves": 9,
+  "max_leaves": 25,
+  "result": {
+    "fluid": "tconstruct:ichor",
+    "amount": 15
+  }
+}

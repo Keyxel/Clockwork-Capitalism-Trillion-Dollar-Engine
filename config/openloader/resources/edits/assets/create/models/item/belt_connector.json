@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "create:item/belt_connector"
+  },
+	"overrides" :[
+		{"predicate":{"custom_model_data":1},"model":"create:item/rubber_belt"}
+	]
+}

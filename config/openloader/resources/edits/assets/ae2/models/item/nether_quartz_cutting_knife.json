@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "ae2:item/nether_quartz_cutting_knife"
+  },
+	"overrides" :[
+		{"predicate":{"custom_model_data":1},"model":"ae2:item/eternal_cutting_knife"}
+	]
+}

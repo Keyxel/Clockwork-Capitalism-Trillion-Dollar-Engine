@@ -1,0 +1,9 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "create:item/electron_tube"
+  },
+	"overrides" :[
+		{"predicate":{"custom_model_data":1},"model":"create:item/nickel_electron_tube"}
+	]
+}

@@ -1,0 +1,30 @@
+{
+  "type": "thermal:tree_extractor",
+  "trunk": {
+    "Name": "biomesoplenty:magic_log",
+    "Properties": {
+      "axis": "y"
+    }
+  },
+  "leaves": {
+    "Name": "biomesoplenty:magic_leaves",
+    "Properties": {
+      "persistent": "false"
+    }
+  },
+  "sapling": "biomesoplenty:magic_sapling",
+  "min_height": 6,
+  "max_height": 12,
+  "min_leaves": 16,
+  "max_leaves": 24,
+  "result": {
+    "fluid": "kubejs:mana_resin",
+    "amount": 25
+  },
+  "conditions": [
+    {
+      "type": "thermal:flag",
+      "flag": "mod_biomesoplenty"
+    }
+  ]
+}

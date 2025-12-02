@@ -1,0 +1,24 @@
+{
+  "type": "thermal:tree_extractor",
+  "trunk": {
+    "Name": "tconstruct:greenheart_log",
+    "Properties": {
+      "axis": "y"
+    }
+  },
+  "leaves": {
+    "Name": "tconstruct:earth_slime_leaves",
+    "Properties": {
+      "persistent": "false"
+    }
+  },
+  "sapling": "tconstruct:earth_slime_sapling",
+  "min_height": 3,
+  "max_height": 16,
+  "min_leaves": 10,
+  "max_leaves": 24,
+  "result": {
+    "fluid": "tconstruct:earth_slime",
+    "amount": 20
+  }
+}
